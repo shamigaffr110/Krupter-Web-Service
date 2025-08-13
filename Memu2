@@ -72,3 +72,212 @@ public void ShowReport()
         rd.Close();
     }
 }
+
+ALTER TABLE TrainMaster
+ADD IsActive BIT NOT NULL DEFAULT 1;
+
+using System;
+using System.Data.SqlClient;
+
+namespace RailwayReservation.DataAccessClass
+{
+    public class AdminDataAccess
+    {
+        private TrainDataAccess trainAccess;
+
+        public AdminDataAccess()
+        {
+            trainAccess = new TrainDataAccess(); // Reuse train functions if needed
+        }
+
+        public void ShowAllBookings()
+        {
+            using (SqlConnection conn = DatabaseConnection.getConnection())
+            {
+                string query = @"
+                SELECT r.BookingId, c.CustName, t.TrainName, tc.ClassType, r.TravelDate, r.CurrentStatus
+                FROM Reservations r
+                JOIN Customers c ON r.CustId = c.CustId
+                JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId
+                JOIN TrainMaster t ON tc.TrainNumber = t.TrainNumber
+                ORDER BY r.BookingId DESC";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                SqlDataReader rd = cmd.ExecuteReader();
+                Console.WriteLine("\n--- All Bookings ---");
+                while (rd.Read())
+                {
+                    Console.WriteLine($"Booking ID: {rd["BookingId"]}, Name: {rd["CustName"]}, Train: {rd["TrainName"]}, Class: {rd["ClassType"]}, Travel Date: {rd["TravelDate"]}, Status: {rd["CurrentStatus"]}");
+                }
+                rd.Close();
+            }
+        }
+
+        public void ShowAllCancellations()
+        {
+            using (SqlConnection conn = DatabaseConnection.getConnection())
+            {
+                string query = @"
+                SELECT can.CancellationId, r.BookingId, c.CustName, t.TrainName, tc.ClassType, can.CancelDate
+                FROM Cancellations can
+                JOIN Reservations r ON can.BookingId = r.BookingId
+                JOIN Customers c ON r.CustId = c.CustId
+                JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId
+                JOIN TrainMaster t ON tc.TrainNumber = t.TrainNumber
+                ORDER BY can.CancellationId DESC";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                SqlDataReader rd = cmd.ExecuteReader();
+                Console.WriteLine("\n--- All Cancellations ---");
+                while (rd.Read())
+                {
+                    Console.WriteLine($"Cancellation ID: {rd["CancellationId"]}, Booking ID: {rd["BookingId"]}, Name: {rd["CustName"]}, Train: {rd["TrainName"]}, Class: {rd["ClassType"]}, Cancel Date: {rd["CancelDate"]}");
+                }
+                rd.Close();
+            }
+        }
+
+        public void ShowAllCustomersWithBookings()
+        {
+            using (SqlConnection conn = DatabaseConnection.getConnection())
+            {
+                string query = @"
+                SELECT c.CustId, c.CustName, c.CustPhone, c.CustEmail,
+                       r.BookingId, t.TrainName, tc.ClassType, r.TravelDate, r.CurrentStatus
+                FROM Customers c
+                LEFT JOIN Reservations r ON c.CustId = r.CustId
+                LEFT JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId
+                LEFT JOIN TrainMaster t ON tc.TrainNumber = t.TrainNumber
+                ORDER BY c.CustId, r.BookingId";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                SqlDataReader rd = cmd.ExecuteReader();
+
+                Console.WriteLine("\n--- Customer Details with Bookings ---");
+                int lastCustId = -1;
+                while (rd.Read())
+                {
+                    int custId = Convert.ToInt32(rd["CustId"]);
+                    if (custId != lastCustId)
+                    {
+                        Console.WriteLine($"\nCustomer ID: {custId}, Name: {rd["CustName"]}, Phone: {rd["CustPhone"]}, Email: {rd["CustEmail"]}");
+                        lastCustId = custId;
+                    }
+                    if (rd["BookingId"] != DBNull.Value)
+                    {
+                        Console.WriteLine($"  Booking ID: {rd["BookingId"]}, Train: {rd["TrainName"]}, Class: {rd["ClassType"]}, Date: {rd["TravelDate"]}, Status: {rd["CurrentStatus"]}");
+                    }
+                }
+                rd.Close();
+            }
+        }
+
+        public void ShowReport()
+        {
+            using (SqlConnection conn = DatabaseConnection.getConnection())
+            {
+                string query = @"
+                SELECT 
+                    (SELECT COUNT(*) FROM Reservations) AS TotalBookings,
+                    (SELECT COUNT(*) FROM Cancellations) AS TotalCancellations,
+                    (SELECT ISNULL(SUM(RefundAmount),0) FROM Refunds) AS TotalRefunds,
+                    (SELECT ISNULL(SUM(tc.Price),0) 
+                     FROM Reservations r 
+                     JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId 
+                     WHERE r.CurrentStatus='Confirmed') AS TotalRevenue";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                SqlDataReader rd = cmd.ExecuteReader();
+                if (rd.Read())
+                {
+                    Console.WriteLine("\n--- Admin Report ---");
+                    Console.WriteLine($"Total Bookings: {rd["TotalBookings"]}");
+                    Console.WriteLine($"Total Cancellations: {rd["TotalCancellations"]}");
+                    Console.WriteLine($"Total Refunds Issued: {rd["TotalRefunds"]}");
+                    Console.WriteLine($"Total Revenue: {rd["TotalRevenue"]}");
+                }
+                rd.Close();
+            }
+        }
+
+        public void AddTrain()
+        {
+            trainAccess.AddTrain();
+        }
+
+        public void ShowAllTrains()
+        {
+            using (SqlConnection conn = DatabaseConnection.getConnection())
+            {
+                string query = @"
+                SELECT t.TrainNumber, t.TrainName, t.Source, t.Destination, tc.ClassType, tc.AvailableSeats, tc.Price
+                FROM TrainMaster t
+                JOIN TrainClasses tc ON t.TrainNumber = tc.TrainNumber
+                WHERE t.IsActive = 1
+                ORDER BY t.TrainNumber";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                SqlDataReader rd = cmd.ExecuteReader();
+                Console.WriteLine("\n--- Active Trains ---");
+                while (rd.Read())
+                {
+                    Console.WriteLine($"Train No: {rd["TrainNumber"]}, Name: {rd["TrainName"]}, From: {rd["Source"]}, To: {rd["Destination"]}, Class: {rd["ClassType"]}, Seats: {rd["AvailableSeats"]}, Price: {rd["Price"]}");
+                }
+                rd.Close();
+            }
+        }
+
+        public void RemoveTrain()
+        {
+            using (SqlConnection conn = DatabaseConnection.getConnection())
+            {
+                Console.Write("Enter Train Number to mark as inactive: ");
+                int trainNo = int.Parse(Console.ReadLine());
+
+                SqlCommand cmd = new SqlCommand("UPDATE TrainMaster SET IsActive = 0 WHERE TrainNumber = @no", conn);
+                cmd.Parameters.AddWithValue("@no", trainNo);
+
+                int rows = cmd.ExecuteNonQuery();
+                if (rows > 0)
+                    Console.WriteLine("Train marked as inactive successfully.");
+                else
+                    Console.WriteLine("Train not found or already inactive.");
+            }
+        }
+
+        public void DeleteBookingAndRefund(int bookingId)
+        {
+            using (SqlConnection conn = DatabaseConnection.getConnection())
+            {
+                // Get TrainClassId
+                SqlCommand getClassCmd = new SqlCommand("SELECT TrainClassId FROM Reservations WHERE BookingId=@bid", conn);
+                getClassCmd.Parameters.AddWithValue("@bid", bookingId);
+                object classObj = getClassCmd.ExecuteScalar();
+                if (classObj == null)
+                {
+                    Console.WriteLine("Booking not found.");
+                    return;
+                }
+                int trainClassId = Convert.ToInt32(classObj);
+
+                // Full refund
+                SqlCommand refundCmd = new SqlCommand("INSERT INTO Refunds (BookingId, RefundAmount, RefundDate) SELECT BookingId, tc.Price, GETDATE() FROM Reservations r JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId WHERE BookingId=@bid", conn);
+                refundCmd.Parameters.AddWithValue("@bid", bookingId);
+                refundCmd.ExecuteNonQuery();
+
+                // Mark as cancelled
+                SqlCommand cancelCmd = new SqlCommand("UPDATE Reservations SET CurrentStatus='Cancelled' WHERE BookingId=@bid", conn);
+                cancelCmd.Parameters.AddWithValue("@bid", bookingId);
+                cancelCmd.ExecuteNonQuery();
+
+                // Update seats
+                SqlCommand seatCmd = new SqlCommand("UPDATE TrainClasses SET AvailableSeats = AvailableSeats + 1 WHERE TrainClassId = @id", conn);
+                seatCmd.Parameters.AddWithValue("@id", trainClassId);
+                seatCmd.ExecuteNonQuery();
+
+                Console.WriteLine("Booking deleted and full refund issued.");
+            }
+        }
+    }
+}
+
