@@ -1,0 +1,76 @@
+ALTER TABLE Reservations
+ADD PassengerCount INT NOT NULL DEFAULT 1;
+
+ALTER TABLE TrainMaster
+ADD IsActive BIT NOT NULL DEFAULT 1;
+
+
+-- ==============================
+-- 1. Customers Table
+-- ==============================
+CREATE TABLE Customers (
+    CustId INT IDENTITY(1,1) PRIMARY KEY,
+    CustName VARCHAR(100) NOT NULL,
+    CustPhone VARCHAR(15) NOT NULL,
+    CustEmail VARCHAR(100) NOT NULL
+);
+
+-- ==============================
+-- 2. Train Master Table
+-- ==============================
+CREATE TABLE TrainMaster (
+    TrainNumber INT PRIMARY KEY,
+    TrainName VARCHAR(100) NOT NULL,
+    Source VARCHAR(50) NOT NULL,
+    Destination VARCHAR(50) NOT NULL,
+    IsActive BIT NOT NULL DEFAULT 1
+);
+
+-- ==============================
+-- 3. Train Classes Table
+-- ==============================
+CREATE TABLE TrainClasses (
+    TrainClassId INT IDENTITY(1,1) PRIMARY KEY,
+    TrainNumber INT NOT NULL,
+    ClassType VARCHAR(10) NOT NULL, -- SL, 3AC, 2AC, 1AC
+    AvailableSeats INT NOT NULL,
+    MaxSeats INT NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (TrainNumber) REFERENCES TrainMaster(TrainNumber)
+);
+
+-- ==============================
+-- 4. Reservations Table
+-- ==============================
+CREATE TABLE Reservations (
+    BookingId INT IDENTITY(1,1) PRIMARY KEY,
+    CustId INT NOT NULL,
+    TrainClassId INT NOT NULL,
+    TravelDate DATE NOT NULL,
+    CurrentStatus VARCHAR(20) NOT NULL,
+    BookingDate DATETIME NOT NULL,
+    PassengerCount INT NOT NULL,
+    FOREIGN KEY (CustId) REFERENCES Customers(CustId),
+    FOREIGN KEY (TrainClassId) REFERENCES TrainClasses(TrainClassId)
+);
+
+-- ==============================
+-- 5. Cancellations Table
+-- ==============================
+CREATE TABLE Cancellations (
+    CancelId INT IDENTITY(1,1) PRIMARY KEY,
+    BookingId INT NOT NULL,
+    CancelDate DATETIME NOT NULL,
+    FOREIGN KEY (BookingId) REFERENCES Reservations(BookingId)
+);
+
+-- ==============================
+-- 6. Refunds Table
+-- ==============================
+CREATE TABLE Refunds (
+    RefundId INT IDENTITY(1,1) PRIMARY KEY,
+    BookingId INT NOT NULL,
+    RefundAmount DECIMAL(10,2) NOT NULL,
+    RefundDate DATETIME NOT NULL,
+    FOREIGN KEY (BookingId) REFERENCES Reservations(BookingId)
+);
