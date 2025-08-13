@@ -1,0 +1,67 @@
+public void ViewTrainsAndSeats()
+{
+    using (SqlConnection conn = DatabaseConnection.getConnection())
+    {
+        string query = @"
+            SELECT t.TrainNumber, t.TrainName, t.Source, t.Destination, 
+                   tc.ClassType, tc.AvailableSeats, tc.MaxSeats, tc.Price
+            FROM TrainMaster t
+            JOIN TrainClasses tc ON t.TrainNumber = tc.TrainNumber
+            WHERE t.IsActive = 1
+            ORDER BY t.TrainNumber, tc.ClassType";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        SqlDataReader rd = cmd.ExecuteReader();
+
+        Console.WriteLine("\n--- Available Trains & Seats ---");
+        while (rd.Read())
+        {
+            Console.WriteLine(
+                $"Train No: {rd["TrainNumber"]}, Name: {rd["TrainName"]}, " +
+                $"From: {rd["Source"]}, To: {rd["Destination"]}, Class: {rd["ClassType"]}, " +
+                $"Seats: {rd["AvailableSeats"]}/{rd["MaxSeats"]}, Price: {rd["Price"]}"
+            );
+        }
+        rd.Close();
+    }
+}
+
+public void ViewBookingStatus()
+{
+    using (SqlConnection conn = DatabaseConnection.getConnection())
+    {
+        Console.Write("Enter Booking ID: ");
+        int bookingId = int.Parse(Console.ReadLine());
+
+        string query = @"
+            SELECT r.BookingId, r.CurrentStatus, r.TravelDate, r.BookingDate, r.PassengerCount,
+                   c.CustName, t.TrainName, t.Source, t.Destination, tc.ClassType
+            FROM Reservations r
+            JOIN Customers c ON r.CustId = c.CustId
+            JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId
+            JOIN TrainMaster t ON tc.TrainNumber = t.TrainNumber
+            WHERE r.BookingId = @bid";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@bid", bookingId);
+
+        SqlDataReader rd = cmd.ExecuteReader();
+        if (!rd.Read())
+        {
+            Console.WriteLine("Booking not found.");
+            return;
+        }
+
+        Console.WriteLine("\n--- Booking Status ---");
+        Console.WriteLine($"Booking ID: {rd["BookingId"]}");
+        Console.WriteLine($"Customer: {rd["CustName"]}");
+        Console.WriteLine($"Train: {rd["TrainName"]}");
+        Console.WriteLine($"From: {rd["Source"]}, To: {rd["Destination"]}");
+        Console.WriteLine($"Class: {rd["ClassType"]}");
+        Console.WriteLine($"No. of Passengers: {rd["PassengerCount"]}");
+        Console.WriteLine($"Travel Date: {rd["TravelDate"]}");
+        Console.WriteLine($"Booking Date: {rd["BookingDate"]}");
+        Console.WriteLine($"Current Status: {rd["CurrentStatus"]}");
+        rd.Close();
+    }
+}
