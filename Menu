@@ -1,0 +1,56 @@
+static void AdminMenu()
+{
+    AdminDataAccess adminAccess = new AdminDataAccess();
+
+    while (true)
+    {
+        Console.WriteLine("\n--- Admin Menu ---");
+        Console.WriteLine("1. View All Bookings");
+        Console.WriteLine("2. View All Cancellations");
+        Console.WriteLine("3. Add Train");
+        Console.WriteLine("4. Remove Train");
+        Console.WriteLine("5. View All Trains");
+        Console.WriteLine("6. View All Customers & Their Bookings");
+        Console.WriteLine("7. View Reports");
+        Console.WriteLine("8. Delete Booking (Full Refund)");
+        Console.WriteLine("0. Logout");
+        Console.Write("Enter choice: ");
+        string choice = Console.ReadLine();
+
+        switch (choice)
+        {
+            case "1":
+                adminAccess.ShowAllBookings();
+                break;
+            case "2":
+                adminAccess.ShowAllCancellations();
+                break;
+            case "3":
+                adminAccess.AddTrain();
+                break;
+            case "4":
+                adminAccess.RemoveTrain();
+                break;
+            case "5":
+                adminAccess.ShowAllTrains();
+                break;
+            case "6":
+                adminAccess.ShowAllCustomersWithBookings();
+                break;
+            case "7":
+                adminAccess.ShowReport();
+                break;
+            case "8":
+                Console.Write("Enter Booking ID to delete: ");
+                int bookingId = int.Parse(Console.ReadLine());
+                adminAccess.DeleteBookingAndRefund(bookingId);
+                break;
+            case "0":
+                Console.WriteLine("Logging out of admin menu...");
+                return;
+            default:
+                Console.WriteLine("Invalid choice. Please try again.");
+                break;
+        }
+    }
+}
