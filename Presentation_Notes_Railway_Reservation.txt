@@ -1,0 +1,45 @@
+# Railway Reservation System - Presentation Notes
+
+## 1. Introduction
+- The project is a console-based railway reservation system built with C# and ADO.NET.
+- Designed for both admin and user roles with real-time seat availability and ticket generation.
+
+## 2. Key Modules
+- **Admin Module**: Manage trains, view reports, cancel bookings, process refunds.
+- **User Module**: Search trains, view availability, book tickets, check PNR.
+
+## 3. Database Design
+- Uses relational schema with foreign keys and composite keys.
+- TrainClasses table uses (TrainNumber, ClassType) as primary key.
+- Triggers adjust seat availability on booking and cancellation.
+
+## 4. Booking Process
+1. User searches for trains between two stations.
+2. Selects train number and class type (short codes: sl, 3a, 2a).
+3. Enters travel date and number of passengers.
+4. System checks availability and price.
+5. Confirms booking, reduces seats, generates PDF ticket.
+
+## 5. Ticket Generation
+- PDF includes PNR, passenger details, train details, travel date, class, passengers, total fare, booking date.
+
+## 6. Exception Handling
+- Custom exceptions for input errors, booking not found, database issues.
+- Ensures smooth flow and user-friendly error messages.
+
+## 7. Demo Plan
+- Show database tables and initial data.
+- Perform a booking (multiple passengers).
+- Show seat reduction in database.
+- Display generated ticket PDF.
+- Cancel a booking and show seat increment and refund.
+
+## 8. Possible Audience Questions
+- **Q:** How are seats managed for multiple passengers?
+  **A:** Seat counts are updated using triggers based on Passengers column.
+- **Q:** Why use composite key for TrainClasses?
+  **A:** Avoids redundant TrainClassId, ensures uniqueness by TrainNumber + ClassType.
+- **Q:** How is PDF ticket generated?
+  **A:** Using a C# PDF library that writes booking details to a file.
+- **Q:** How does system handle invalid class type input?
+  **A:** Custom `InvalidInputException` prompts correct entry.
