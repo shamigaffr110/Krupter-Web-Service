@@ -1,0 +1,74 @@
+public void ShowAllBookings()
+{
+    using (SqlConnection conn = DatabaseConnection.getConnection())
+    {
+        string query = @"
+        SELECT r.BookingId, c.CustName, t.TrainName, tc.ClassType, r.TravelDate, r.CurrentStatus
+        FROM Reservations r
+        JOIN Customers c ON r.CustId = c.CustId
+        JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId
+        JOIN TrainMaster t ON tc.TrainNumber = t.TrainNumber
+        ORDER BY r.BookingId DESC";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        SqlDataReader rd = cmd.ExecuteReader();
+        Console.WriteLine("\n--- All Bookings ---");
+        while (rd.Read())
+        {
+            Console.WriteLine($"Booking ID: {rd["BookingId"]}, Name: {rd["CustName"]}, Train: {rd["TrainName"]}, Class: {rd["ClassType"]}, Travel Date: {rd["TravelDate"]}, Status: {rd["CurrentStatus"]}");
+        }
+        rd.Close();
+    }
+}
+
+public void ShowAllCancellations()
+{
+    using (SqlConnection conn = DatabaseConnection.getConnection())
+    {
+        string query = @"
+        SELECT can.CancellationId, r.BookingId, c.CustName, t.TrainName, tc.ClassType, can.CancelDate
+        FROM Cancellations can
+        JOIN Reservations r ON can.BookingId = r.BookingId
+        JOIN Customers c ON r.CustId = c.CustId
+        JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId
+        JOIN TrainMaster t ON tc.TrainNumber = t.TrainNumber
+        ORDER BY can.CancellationId DESC";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        SqlDataReader rd = cmd.ExecuteReader();
+        Console.WriteLine("\n--- All Cancellations ---");
+        while (rd.Read())
+        {
+            Console.WriteLine($"Cancellation ID: {rd["CancellationId"]}, Booking ID: {rd["BookingId"]}, Name: {rd["CustName"]}, Train: {rd["TrainName"]}, Class: {rd["ClassType"]}, Cancel Date: {rd["CancelDate"]}");
+        }
+        rd.Close();
+    }
+}
+
+public void ShowReport()
+{
+    using (SqlConnection conn = DatabaseConnection.getConnection())
+    {
+        string query = @"
+        SELECT 
+            (SELECT COUNT(*) FROM Reservations) AS TotalBookings,
+            (SELECT COUNT(*) FROM Cancellations) AS TotalCancellations,
+            (SELECT ISNULL(SUM(RefundAmount),0) FROM Refunds) AS TotalRefunds,
+            (SELECT ISNULL(SUM(tc.Price),0) 
+             FROM Reservations r 
+             JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId 
+             WHERE r.CurrentStatus='Confirmed') AS TotalRevenue";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        SqlDataReader rd = cmd.ExecuteReader();
+        if (rd.Read())
+        {
+            Console.WriteLine("\n--- Admin Report ---");
+            Console.WriteLine($"Total Bookings: {rd["TotalBookings"]}");
+            Console.WriteLine($"Total Cancellations: {rd["TotalCancellations"]}");
+            Console.WriteLine($"Total Refunds Issued: {rd["TotalRefunds"]}");
+            Console.WriteLine($"Total Revenue: {rd["TotalRevenue"]}");
+        }
+        rd.Close();
+    }
+}
