@@ -1,0 +1,39 @@
+customer menu 
+
+static void CustomerMenu()
+{
+    CustomerDataAccess customer = new CustomerDataAccess();
+    bool exit = false;
+    while (!exit)
+    {
+        Console.WriteLine("\n===== Customer Menu =====");
+        Console.WriteLine("1. View Trains & Available Seats");
+        Console.WriteLine("2. Book Ticket");
+        Console.WriteLine("3. Cancel Ticket");
+        Console.WriteLine("4. View Booking Status");
+        Console.WriteLine("5. Back to Main Menu");
+        Console.Write("Enter choice: ");
+
+        int choice;
+        if (!int.TryParse(Console.ReadLine(), out choice)) continue;
+
+        switch (choice)
+        {
+            case 1:
+                customer.ViewTrainsAndSeats();
+                break;
+            case 2:
+                customer.BookTicket();
+                break;
+            case 3:
+                customer.CancelTicket();
+                break;
+            case 4:
+                customer.ViewBookingStatus();
+                break;
+            case 5:
+                exit = true;
+                break;
+        }
+    }
+}
