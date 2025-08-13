@@ -1,0 +1,61 @@
+public class AdminDataAccess
+{
+    private TrainDataAccess trainAccess;
+
+    public AdminDataAccess()
+    {
+        trainAccess = new TrainDataAccess(); // create only once
+    }
+
+    public void AddTrain()
+    {
+        trainAccess.AddTrain();
+    }
+
+    public void RemoveTrain()
+    {
+        trainAccess.RemoveTrain();
+    }
+
+    public void ShowAllTrains()
+    {
+        trainAccess.ShowAllTrains();
+    }
+
+    public void ShowAllCustomersWithBookings()
+    {
+        using (SqlConnection conn = DatabaseConnection.getConnection())
+        {
+            string query = @"
+            SELECT c.CustId, c.CustName, c.CustPhone, c.CustEmail,
+                   r.BookingId, t.TrainName, tc.ClassType, r.TravelDate, r.CurrentStatus
+            FROM Customers c
+            LEFT JOIN Reservations r ON c.CustId = r.CustId
+            LEFT JOIN TrainClasses tc ON r.TrainClassId = tc.TrainClassId
+            LEFT JOIN TrainMaster t ON tc.TrainNumber = t.TrainNumber
+            ORDER BY c.CustId, r.BookingId";
+
+            SqlCommand cmd = new SqlCommand(query, conn);
+            SqlDataReader rd = cmd.ExecuteReader();
+
+            Console.WriteLine("\n--- Customer Details with Bookings ---");
+            int lastCustId = -1;
+            while (rd.Read())
+            {
+                int custId = Convert.ToInt32(rd["CustId"]);
+                if (custId != lastCustId)
+                {
+                    Console.WriteLine($"\nCustomer ID: {custId}, Name: {rd["CustName"]}, Phone: {rd["CustPhone"]}, Email: {rd["CustEmail"]}");
+                    lastCustId = custId;
+                }
+                if (rd["BookingId"] != DBNull.Value)
+                {
+                    Console.WriteLine($"  Booking ID: {rd["BookingId"]}, Train: {rd["TrainName"]}, Class: {rd["ClassType"]}, Date: {rd["TravelDate"]}, Status: {rd["CurrentStatus"]}");
+                }
+            }
+            rd.Close();
+        }
+    }
+
+    // Existing booking & cancellation methods stay here...
+}
