@@ -1,0 +1,5 @@
+
+<asp:Label runat="server" ForeColor="#111827" Font-Names="Segoe UI"></asp:Label>
+<asp:TextBox runat="server" CssClass="input"></asp:TextBox>
+<asp:Button runat="server" CssClass="btn"></asp:Button>
+<asp:GridView runat="server" CssClass="table"></asp:GridView>
