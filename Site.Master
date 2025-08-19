@@ -1,0 +1,26 @@
+
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="EBillingWeb.SiteMaster" %>
+<!DOCTYPE html>
+<html>
+<head runat="server">
+    <title><asp:ContentPlaceHolder ID="TitleContent" runat="server" /></title>
+    <link href="App_Themes/Modern/Styles.css" rel="stylesheet" />
+</head>
+<body class="bg">
+    <form id="form1" runat="server">
+        <div class="nav">
+            <div class="brand">EBilling</div>
+            <div class="links">
+                <a href="Default.aspx">Home</a>
+                <a href="Bills.aspx">Bills</a>
+                <a href="Reports.aspx">Reports</a>
+                <a href="Login.aspx">Login</a>
+            </div>
+        </div>
+        <div class="container">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </div>
+        <div class="footer">© EBilling Demo</div>
+    </form>
+</body>
+</html>
